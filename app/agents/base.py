@@ -1,0 +1,105 @@
+"""Base agent class for all AI agents"""
+
+from abc import ABC, abstractmethod
+from typing import Any, Dict, Optional
+from langchain_openai import ChatOpenAI
+from langchain.prompts import ChatPromptTemplate
+from langchain.schema import HumanMessage, SystemMessage
+from app.config import settings
+from app.utils.logger import setup_logger, log_agent_activity
+from app.utils.exceptions import AgentExecutionError
+
+logger = setup_logger(__name__)
+
+
+class BaseAgent(ABC):
+    """Abstract base class for all agents in the system"""
+    
+    def __init__(self, model_name: Optional[str] = None, temperature: float = 0.7):
+        """
+        Initialize base agent
+        
+        Args:
+            model_name: OpenAI model name
+            temperature: Model temperature
+        """
+        self.model_name = model_name or settings.researcher_model
+        self.temperature = temperature
+        self.logger = logger
+        self.llm = self._initialize_llm()
+    
+    def _initialize_llm(self) -> ChatOpenAI:
+        """Initialize the language model"""
+        return ChatOpenAI(
+            model=self.model_name,
+            temperature=self.temperature,
+            max_tokens=settings.max_tokens,
+            api_key=settings.openai_api_key,
+            request_timeout=settings.request_timeout
+        )
+    
+    @abstractmethod
+    async def execute(self, *args, **kwargs) -> Any:
+        """Execute the agent's primary task"""
+        pass
+    
+    async def _invoke_llm(
+        self, 
+        system_prompt: str, 
+        user_prompt: str,
+        context: Optional[Dict[str, Any]] = None
+    ) -> str:
+        """
+        Invoke the LLM with system and user prompts
+        
+        Args:
+            system_prompt: System instructions
+            user_prompt: User query
+            context: Additional context data
+            
+        Returns:
+            LLM response text
+            
+        Raises:
+            AgentExecutionError: If LLM invocation fails
+        """
+        try:
+            messages = [
+                SystemMessage(content=system_prompt),
+                HumanMessage(content=user_prompt)
+            ]
+            
+            log_agent_activity(
+                self.logger, 
+                self.__class__.__name__, 
+                "Invoking LLM",
+                {"model": self.model_name}
+            )
+            
+            response = await self.llm.ainvoke(messages)
+            
+            log_agent_activity(
+                self.logger,
+                self.__class__.__name__,
+                "LLM response received",
+                {"length": len(response.content)}
+            )
+            
+            return response.content
+            
+        except Exception as e:
+            self.logger.error(f"LLM invocation failed: {str(e)}")
+            raise AgentExecutionError(
+                f"Failed to invoke LLM: {str(e)}",
+                details={"agent": self.__class__.__name__, "error": str(e)}
+            )
+    
+    def _format_context(self, context: Dict[str, Any]) -> str:
+        """Format context dictionary into readable string"""
+        formatted = []
+        for key, value in context.items():
+            if isinstance(value, (list, dict)):
+                formatted.append(f"{key}: {str(value)[:200]}...")
+            else:
+                formatted.append(f"{key}: {value}")
+        return "\n".join(formatted)

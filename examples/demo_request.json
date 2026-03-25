@@ -1,0 +1,18 @@
+{
+  "keyword_input": {
+    "primary_keyword": "AI blog automation tool",
+    "target_location": "India",
+    "secondary_keywords": [
+      "blog automation software",
+      "AI writing assistant",
+      "content generation tool"
+    ],
+    "target_audience": "Digital marketers and content creators",
+    "content_type": "guide"
+  },
+  "enable_serp_analysis": true,
+  "enable_traffic_projection": true,
+  "custom_instructions": "Focus on practical implementation and ROI",
+  "tone": "professional",
+  "include_faq": true
+}
