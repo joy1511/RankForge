@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://YOUR_RENDER_BACKEND_URL_HERE/api/$1"
+      "destination": "https://rankforge-abn2.onrender.com/api/$1"
     },
     {
       "source": "/(.*)",
