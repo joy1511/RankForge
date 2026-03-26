@@ -12,7 +12,7 @@
 [![MongoDB](https://img.shields.io/badge/MongoDB_Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://mongodb.com/atlas)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 
-[Live Demo](#) &middot; [Getting Started](#getting-started) &middot; [Architecture](#architecture)
+[Live Demo](https://rankforgeai.vercel.app) &middot; [Getting Started](#getting-started) &middot; [Architecture](#architecture)
 
 </div>
 
