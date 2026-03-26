@@ -7,22 +7,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { ScoreGauge } from "../components/ScoreGauge";
 import { ProgressBar } from "../components/ProgressBar";
 import { toast } from "sonner";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { analyzeKeywords, type StrategyBrief, type KeywordInput } from "../services/api";
 
 type Phase = "input" | "analyzing" | "results";
 
 export function KeywordAnalyzer() {
+  const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase>("input");
   const [keyword, setKeyword] = useState("");
-  const [location, setLocation] = useState("");
+  const [targetLocation, setTargetLocation] = useState("");
   const [contentType, setContentType] = useState("blog");
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<StrategyBrief | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleAnalyze = async () => {
-    if (!keyword || !location) {
+    if (!keyword || !targetLocation) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -41,7 +42,7 @@ export function KeywordAnalyzer() {
 
     const input: KeywordInput = {
       primary_keyword: keyword,
-      target_location: location,
+      target_location: targetLocation,
       content_type: contentType as "blog" | "article" | "guide" | "tutorial",
     };
 
@@ -107,6 +108,7 @@ export function KeywordAnalyzer() {
                   placeholder="e.g., Python automation tutorial"
                   value={keyword}
                   onChange={(e) => setKeyword(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAnalyze()}
                   className="mt-2 bg-[--bg-tertiary] border-[--border-subtle]"
                 />
               </div>
@@ -116,8 +118,9 @@ export function KeywordAnalyzer() {
                 <Input
                   id="location"
                   placeholder="e.g., United States"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  value={targetLocation}
+                  onChange={(e) => setTargetLocation(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAnalyze()}
                   className="mt-2 bg-[--bg-tertiary] border-[--border-subtle]"
                 />
               </div>
@@ -400,12 +403,13 @@ export function KeywordAnalyzer() {
             <p className="text-[--text-secondary] mb-6">
               Use this strategy to generate a high-ranking blog post in minutes.
             </p>
-            <Link to="/app/generate">
-              <Button className="btn-primary px-8">
-                Use This Strategy → Generate Blog
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </Link>
+            <Button
+              className="btn-primary px-8"
+              onClick={() => navigate("/app/generate", { state: { keyword, location: targetLocation, contentType } })}
+            >
+              Use This Strategy → Generate Blog
+              <ArrowRight className="ml-2 w-4 h-4" />
+            </Button>
           </div>
         </div>
       )}

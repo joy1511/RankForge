@@ -30,7 +30,7 @@ export function LandingPage() {
     { value: "85–95%", label: "SEO Score" },
     { value: "< 3 min", label: "Per Blog" },
     { value: "20+", label: "Quality Metrics" },
-    { value: "99.9%", label: "Uptime SLA" },
+    { value: "99.9%", label: "Uptime (Render)" },
   ];
 
   return (
@@ -43,10 +43,15 @@ export function LandingPage() {
           <Zap className="w-5 h-5 text-[--text-primary]" />
           <span className="text-lg font-bold tracking-tight text-[--text-primary]">RankForge</span>
         </div>
-        <div className="hidden md:flex items-center gap-8">
-          <a href="#features" className="text-sm text-[--text-secondary] hover:text-[--text-primary] transition-colors">Features</a>
-          <a href="#metrics" className="text-sm text-[--text-secondary] hover:text-[--text-primary] transition-colors">Metrics</a>
-          <a href="#" className="text-sm text-[--text-secondary] hover:text-[--text-primary] transition-colors">Docs</a>
+        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8">
+          <button
+            onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+            className="text-sm text-[--text-secondary] hover:text-[--text-primary] transition-colors"
+          >Features</button>
+          <button
+            onClick={() => document.getElementById('metrics')?.scrollIntoView({ behavior: 'smooth' })}
+            className="text-sm text-[--text-secondary] hover:text-[--text-primary] transition-colors"
+          >Metrics</button>
         </div>
         <div className="flex items-center gap-3">
           {user ? (
@@ -161,7 +166,7 @@ export function LandingPage() {
           </p>
           <Link to="/app/generate">
             <Button className="bg-white text-[--accent-primary] hover:bg-white/90 px-8 py-6 text-base rounded-xl font-semibold">
-              Get Started — It's Free
+              Get Started - It's Free
               <ArrowRight className="ml-2 w-4 h-4" />
             </Button>
           </Link>
@@ -173,9 +178,8 @@ export function LandingPage() {
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-[--text-tertiary]">
           <span>© 2026 RankForge</span>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-[--text-primary] transition-colors">GitHub</a>
-            <a href="#" className="hover:text-[--text-primary] transition-colors">Docs</a>
-            <a href="#" className="hover:text-[--text-primary] transition-colors">API</a>
+            <a href="https://github.com/Rishabh1925/RankForge" target="_blank" rel="noopener noreferrer" className="hover:text-[--text-primary] transition-colors">GitHub</a>
+            <Link to="/app" className="hover:text-[--text-primary] transition-colors">App</Link>
           </div>
         </div>
       </footer>

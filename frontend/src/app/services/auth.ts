@@ -34,7 +34,22 @@ export function getStoredUser(): AuthUser | null {
 }
 
 export function isAuthenticated(): boolean {
-  return !!getToken();
+  const token = getToken();
+  if (!token) return false;
+  // Decode the JWT payload (no signature verification needed client-side)
+  // to check expiry before making API calls
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    if (payload.exp && Date.now() / 1000 > payload.exp) {
+      logout(); // clear stale token
+      return false;
+    }
+  } catch {
+    // malformed token — treat as unauthenticated
+    logout();
+    return false;
+  }
+  return true;
 }
 
 export function logout(): void {

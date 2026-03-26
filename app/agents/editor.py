@@ -1,5 +1,6 @@
 """Editor Agent - Validates and scores content quality"""
 
+import re
 from app.agents.base import BaseAgent
 from app.schemas.generation import BlogDraft
 from app.schemas.keyword import StrategyBrief
@@ -146,9 +147,9 @@ EDITORIAL NOTES:
         
         cluster = strategy_brief.keyword_cluster
         
-        # Get content preview (first 1500 chars)
-        content_preview = blog_draft.markdown_content[:1500]
-        if len(blog_draft.markdown_content) > 1500:
+        # Get content preview (first 3000 chars — enough to cover most of the blog)
+        content_preview = blog_draft.markdown_content[:3000]
+        if len(blog_draft.markdown_content) > 3000:
             content_preview += "\n\n[... content continues ...]"
         
         prompt = f"""Review this blog content and provide qualitative insights:
@@ -260,4 +261,3 @@ Be specific and actionable in your feedback."""
         return report
 
 
-import re

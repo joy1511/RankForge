@@ -46,6 +46,7 @@ class GenerationRequest(BaseModel):
     custom_instructions: Optional[str] = None
     tone: str = Field(default="professional", pattern="^(professional|casual|technical|conversational)$")
     include_faq: bool = Field(default=True)
+    target_word_count: Optional[int] = Field(default=None, ge=500, le=10000)
 
 
 # Enable forward references

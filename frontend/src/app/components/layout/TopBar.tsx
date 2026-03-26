@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bell, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useLocation } from "react-router";
 import { AuthModal } from "../AuthModal";
 import { getStoredUser, isAuthenticated, logout } from "../../services/auth";
@@ -45,10 +45,6 @@ export function TopBar() {
         </div>
 
         <div className="flex items-center gap-4">
-          <button className="relative p-2 rounded-lg hover:bg-[--bg-tertiary] transition-colors">
-            <Bell className="w-5 h-5 text-[--text-secondary]" />
-          </button>
-
           {user ? (
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-[#2D2B55] flex items-center justify-center text-white text-sm font-medium">

@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
-import { Zap, Copy, Download, ArrowLeft, CheckCircle, Circle, AlertCircle, Check } from "lucide-react";
+import { Zap, Copy, Download, ArrowLeft, CheckCircle, Circle, AlertCircle, Check, X, Plus } from "lucide-react";
+import { useLocation } from "react-router";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -23,16 +24,24 @@ type Phase = "input" | "generating" | "results";
 type Tone = "professional" | "casual" | "technical" | "conversational";
 
 export function BlogGenerator() {
+  const location = useLocation();
+  const prefill = location.state as { keyword?: string; location?: string; contentType?: string } | null;
+
   const [phase, setPhase] = useState<Phase>("input");
-  const [keyword, setKeyword] = useState("");
-  const [location, setLocation] = useState("");
-  const [contentType, setContentType] = useState("blog");
+  const [keyword, setKeyword] = useState(prefill?.keyword ?? "");
+  const [location2, setLocation2] = useState(prefill?.location ?? "");
+  const [contentType, setContentType] = useState(prefill?.contentType ?? "blog");
   const [tone, setTone] = useState<Tone>("professional");
   const [includeFAQ, setIncludeFAQ] = useState(true);
   const [serpAnalysis, setSerpAnalysis] = useState(true);
   const [trafficProjection, setTrafficProjection] = useState(true);
   const [customInstructions, setCustomInstructions] = useState("");
   const [charCount, setCharCount] = useState(0);
+  // secondary keywords tag input
+  const [secondaryKeywords, setSecondaryKeywords] = useState<string[]>([]);
+  const [kwInput, setKwInput] = useState("");
+  // user-defined word count
+  const [targetWordCount, setTargetWordCount] = useState<number>(1500);
 
   const [pipelinePhase, setPipelinePhase] = useState(1);
   const [pipelineProgress, setPipelineProgress] = useState(0);
@@ -41,7 +50,7 @@ export function BlogGenerator() {
   const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const handleGenerate = async () => {
-    if (!keyword || !location) {
+    if (!keyword || !location2) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -68,14 +77,16 @@ export function BlogGenerator() {
     const req: GenerationRequest = {
       keyword_input: {
         primary_keyword: keyword,
-        target_location: location,
+        target_location: location2,
         content_type: contentType as "blog" | "article" | "guide" | "tutorial",
+        secondary_keywords: secondaryKeywords.length > 0 ? secondaryKeywords : undefined,
       },
       enable_serp_analysis: serpAnalysis,
       enable_traffic_projection: trafficProjection,
       custom_instructions: customInstructions || undefined,
       tone,
       include_faq: includeFAQ,
+      target_word_count: targetWordCount,
     };
 
     try {
@@ -118,6 +129,22 @@ export function BlogGenerator() {
     setPipelinePhase(1);
     setPipelineProgress(0);
     setResult(null);
+    setErrorMsg(null);
+    setSecondaryKeywords([]);
+    setKwInput("");
+    setTargetWordCount(1500);
+  };
+
+  const addKeyword = (val: string) => {
+    const trimmed = val.trim().toLowerCase();
+    if (trimmed && !secondaryKeywords.includes(trimmed) && secondaryKeywords.length < 10) {
+      setSecondaryKeywords((prev) => [...prev, trimmed]);
+    }
+    setKwInput("");
+  };
+
+  const removeKeyword = (kw: string) => {
+    setSecondaryKeywords((prev) => prev.filter((k) => k !== kw));
   };
 
   const handleCopy = () => {
@@ -188,15 +215,64 @@ export function BlogGenerator() {
                 <Input
                   id="location"
                   placeholder="e.g., United States"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  value={location2}
+                  onChange={(e) => setLocation2(e.target.value)}
                   className="mt-2 bg-[--bg-tertiary] border-[--border-subtle] focus:border-[--border-active]"
                 />
               </div>
 
+              {/* Secondary Keywords */}
               <div>
-                <Label htmlFor="content-type">Content Type</Label>
-                <Select value={contentType} onValueChange={setContentType}>
+                <Label>Secondary Keywords <span className="text-[--text-tertiary] font-normal text-xs">(optional, up to 10)</span></Label>
+                <div className="mt-2 flex flex-wrap gap-2 p-2.5 rounded-lg bg-[--bg-tertiary] border border-[--border-subtle] min-h-[42px]">
+                  {secondaryKeywords.map((kw) => (
+                    <span key={kw} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[--accent-secondary]/15 text-[--accent-secondary] text-xs font-medium">
+                      {kw}
+                      <button onClick={() => removeKeyword(kw)} className="hover:opacity-70 transition-opacity">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                  <input
+                    value={kwInput}
+                    onChange={(e) => setKwInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addKeyword(kwInput); }
+                      if (e.key === 'Backspace' && !kwInput && secondaryKeywords.length > 0) {
+                        setSecondaryKeywords((prev) => prev.slice(0, -1));
+                      }
+                    }}
+                    onBlur={() => kwInput.trim() && addKeyword(kwInput)}
+                    placeholder={secondaryKeywords.length === 0 ? "Type keyword, press Enter or comma..." : ""}
+                    className="flex-1 min-w-[140px] bg-transparent text-sm outline-none text-[--text-primary] placeholder:text-[--text-tertiary]"
+                  />
+                </div>
+                <p className="text-xs text-[--text-tertiary] mt-1">{secondaryKeywords.length}/10 keywords added</p>
+              </div>
+
+              {/* Target Word Count */}
+              <div>
+                <Label htmlFor="word-count">Target Word Count</Label>
+                <div className="mt-2 grid grid-cols-4 gap-2">
+                  {[500, 1000, 1500, 2000, 2500, 3000, 4000, 5000].map((wc) => (
+                    <button
+                      key={wc}
+                      onClick={() => setTargetWordCount(wc)}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
+                        targetWordCount === wc
+                          ? "btn-primary border-transparent"
+                          : "bg-white text-[--text-primary] border-[--border-subtle] hover:border-[--border-active]"
+                      }`}
+                    >
+                      {wc >= 1000 ? `${wc/1000}k` : wc}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-[--text-tertiary] mt-1">Selected: {targetWordCount.toLocaleString()} words</p>
+              </div>
+
+              <div>
+                <Label htmlFor="content-type">Content Type</Label>                <Select value={contentType} onValueChange={setContentType}>
                   <SelectTrigger className="mt-2 bg-[--bg-tertiary] border-[--border-subtle]">
                     <SelectValue />
                   </SelectTrigger>
@@ -467,6 +543,7 @@ export function BlogGenerator() {
             <TabsList className="bg-[--bg-secondary] border border-[--border-subtle]">
               <TabsTrigger value="content">Blog Content</TabsTrigger>
               <TabsTrigger value="seo">SEO Report</TabsTrigger>
+              <TabsTrigger value="geo">GEO Report</TabsTrigger>
             </TabsList>
 
             <TabsContent value="content" className="space-y-6">
@@ -476,10 +553,24 @@ export function BlogGenerator() {
                     <h1 className="text-3xl font-bold mb-2">
                       {result.blog_content.match(/^#\s+(.+)$/m)?.[1] || "Generated Blog"}
                     </h1>
-                    <p className="text-[--text-secondary]">
-                      Generated on {new Date(result.generation_timestamp).toLocaleDateString()} •{" "}
-                      {wordCount.toLocaleString()} words
-                    </p>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <p className="text-[--text-secondary]">
+                        Generated on {new Date(result.generation_timestamp).toLocaleDateString()}
+                      </p>
+                      <span className="text-[--text-tertiary]">•</span>
+                      <span className={`text-sm font-semibold px-2.5 py-1 rounded-full ${
+                        wordCount >= (strat?.target_word_count ?? 1500)
+                          ? "bg-[--success]/10 text-[--success]"
+                          : "bg-[--warning]/10 text-[--warning]"
+                      }`}>
+                        {wordCount.toLocaleString()} words
+                        {strat && (
+                          <span className="font-normal text-xs ml-1 opacity-70">
+                            / {(strat.target_word_count ?? 1500).toLocaleString()} target
+                          </span>
+                        )}
+                      </span>
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={handleCopy}>
@@ -506,8 +597,19 @@ export function BlogGenerator() {
               <div className="glass-panel rounded-xl p-8 card-shadow text-center">
                 <ScoreGauge value={Math.round(meta.overall_score)} size="large" label="Overall Content Score" />
                 <p className="text-sm text-[--text-secondary] mt-4">
-                  SEO (30%) + Snippet (20%) + Naturalness (25%) + Depth (15%) + Actionability (10%)
+                  SEO (25%) + GEO (25%) + Snippet (15%) + Naturalness (20%) + Depth (10%) + Actionability (5%)
                 </p>
+                {/* SEO + GEO side by side */}
+                <div className="grid grid-cols-2 gap-4 mt-6 max-w-sm mx-auto">
+                  <div className="p-4 rounded-xl bg-[--bg-tertiary]/50 text-center">
+                    <div className="text-2xl font-bold gradient-text">{meta.seo_metrics.seo_optimization_percentage.toFixed(0)}%</div>
+                    <div className="text-xs text-[--text-secondary] mt-1 font-medium">SEO Score</div>
+                  </div>
+                  <div className="p-4 rounded-xl bg-[--bg-tertiary]/50 text-center">
+                    <div className="text-2xl font-bold gradient-text">{meta.geo_metrics ? Math.round(meta.geo_metrics.geo_score) : "—"}%</div>
+                    <div className="text-xs text-[--text-secondary] mt-1 font-medium">GEO Score</div>
+                  </div>
+                </div>
               </div>
 
               {/* Score Breakdown */}
@@ -588,6 +690,33 @@ export function BlogGenerator() {
                   </div>
                 </div>
               </div>
+
+              {/* Word Count vs Target */}
+              {strat && (() => {
+                const target = strat.target_word_count ?? (strat.estimated_monthly_searches > 2000 ? 2000 : 1500);
+                const pct = Math.min(100, Math.round((wordCount / target) * 100));
+                const met = wordCount >= target;
+                return (
+                  <div className="glass-panel rounded-xl p-6 card-shadow">
+                    <h3 className="font-bold mb-4">Word Count vs Target</h3>
+                    <div className="flex items-end gap-3 mb-3">
+                      <span className={`text-3xl font-bold ${met ? "text-[--success]" : "text-[--warning]"}`}>
+                        {wordCount.toLocaleString()}
+                      </span>
+                      <span className="text-[--text-tertiary] text-sm mb-1">/ {target.toLocaleString()} words target</span>
+                    </div>
+                    <ProgressBar value={pct} color={met ? "success" : "secondary"} className="mb-3" />
+                    <div className={`flex items-center gap-2 text-sm rounded-lg p-3 ${met ? "bg-[--success]/10 text-[--success]" : "bg-[--warning]/10 text-[--warning]"}`}>
+                      <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                      <span className="font-semibold">
+                        {met
+                          ? `Target met — ${(wordCount - target).toLocaleString()} words over`
+                          : `${(target - wordCount).toLocaleString()} words short of target`}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Strategy Brief */}
               {strat && (
@@ -671,6 +800,105 @@ export function BlogGenerator() {
                   Copy Blog to Clipboard
                 </Button>
               </div>
+            </TabsContent>
+
+            {/* ── GEO Report Tab ── */}
+            <TabsContent value="geo" className="space-y-6">
+              {meta.geo_metrics && (() => {
+                const geo = meta.geo_metrics;
+                const getColor = (v: number) => v >= 70 ? "text-[--success]" : v >= 45 ? "text-[--warning]" : "text-[--danger]";
+                const getBarColor = (v: number): "success" | "secondary" | "danger" => v >= 70 ? "success" : v >= 45 ? "secondary" : "danger";
+                const getLabel = (v: number) => v >= 70 ? "Strong" : v >= 45 ? "Moderate" : "Needs Work";
+
+                return (
+                  <>
+                    {/* Overall GEO Score */}
+                    <div className="glass-panel rounded-xl p-8 card-shadow text-center">
+                      <ScoreGauge value={Math.round(geo.geo_score)} size="large" label="GEO Score — AI Citation Readiness" />
+                      <p className="text-sm text-[--text-secondary] mt-4 max-w-lg mx-auto">
+                        Measures how likely AI systems (ChatGPT, Perplexity, Gemini) are to cite this content when answering user queries.
+                      </p>
+                      <p className="text-xs text-[--text-tertiary] mt-2">
+                        Direct Answer (25%) + Citation Structure (20%) + E-E-A-T (20%) + Entity Clarity (15%) + Query Match (10%) + Authority (10%)
+                      </p>
+                    </div>
+
+                    {/* Six signal breakdown */}
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+                      {[
+                        { label: "Direct Answer", value: geo.direct_answer_score, desc: "Concise answers after question headings", weight: "25%" },
+                        { label: "Citation Structure", value: geo.citation_structure_score, desc: "Lists, tables, definitions AI can extract", weight: "20%" },
+                        { label: "E-E-A-T Signals", value: geo.eeat_score, desc: "Statistics, expert refs, authority phrases", weight: "20%" },
+                        { label: "Entity Clarity", value: geo.entity_clarity_score, desc: "Named entities, facts, specific numbers", weight: "15%" },
+                        { label: "Query Match", value: geo.query_match_score, desc: "Mirrors how users ask AI questions", weight: "10%" },
+                        { label: "Authority & Depth", value: geo.authority_score, desc: "Comprehensive coverage, FAQ, conclusion", weight: "10%" },
+                      ].map(({ label, value, desc, weight }) => (
+                        <div key={label} className="glass-panel rounded-xl p-5 card-shadow">
+                          <div className="flex items-start justify-between mb-2">
+                            <h3 className="font-semibold text-sm">{label}</h3>
+                            <span className="text-xs text-[--text-tertiary] bg-[--bg-tertiary] px-2 py-0.5 rounded-full">{weight}</span>
+                          </div>
+                          <div className={`text-3xl font-bold mb-2 ${getColor(value)}`}>{Math.round(value)}</div>
+                          <ProgressBar value={value} color={getBarColor(value)} className="mb-2" height="thin" />
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs text-[--text-tertiary] leading-relaxed">{desc}</p>
+                            <span className={`text-xs font-semibold ml-2 flex-shrink-0 ${getColor(value)}`}>{getLabel(value)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* GEO Strengths & Improvements */}
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="glass-panel rounded-xl p-6 card-shadow">
+                        <h3 className="font-bold mb-4 flex items-center gap-2 text-[--success]">
+                          <CheckCircle className="w-4 h-4" />
+                          GEO Strengths
+                        </h3>
+                        {geo.geo_strengths.length > 0 ? (
+                          <ul className="space-y-3">
+                            {geo.geo_strengths.map((item, i) => (
+                              <li key={i} className="flex items-start gap-2 text-sm">
+                                <Check className="w-4 h-4 text-[--success] mt-0.5 flex-shrink-0" />
+                                <span className="text-[--text-secondary]">{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-sm text-[--text-tertiary]">No major strengths detected yet.</p>
+                        )}
+                      </div>
+
+                      <div className="glass-panel rounded-xl p-6 card-shadow">
+                        <h3 className="font-bold mb-4 flex items-center gap-2 text-[--warning]">
+                          <AlertCircle className="w-4 h-4" />
+                          GEO Improvements
+                        </h3>
+                        {geo.geo_improvements.length > 0 ? (
+                          <ul className="space-y-3">
+                            {geo.geo_improvements.map((item, i) => (
+                              <li key={i} className="flex items-start gap-2 text-sm">
+                                <AlertCircle className="w-4 h-4 text-[--warning] mt-0.5 flex-shrink-0" />
+                                <span className="text-[--text-secondary]">{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-sm text-[--text-tertiary]">Content is well-optimised for AI citation.</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* What is GEO explainer */}
+                    <div className="glass-panel rounded-xl p-6 card-shadow border-l-4 border-[--accent-secondary]">
+                      <h3 className="font-bold mb-2">What is GEO?</h3>
+                      <p className="text-sm text-[--text-secondary] leading-relaxed">
+                        Generative Engine Optimization (GEO) is the practice of structuring content so AI systems like ChatGPT, Perplexity, and Google's AI Overviews are more likely to cite it in their responses. Unlike traditional SEO which targets search ranking algorithms, GEO targets the retrieval and citation mechanisms of large language models. Content with direct answers, clear structure, strong E-E-A-T signals, and specific entities scores higher.
+                      </p>
+                    </div>
+                  </>
+                );
+              })()}
             </TabsContent>
           </Tabs>
         </div>

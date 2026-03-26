@@ -3,6 +3,8 @@
  * Typed client for communicating with the FastAPI backend
  */
 
+import { getToken } from './auth';
+
 const API_BASE = `${import.meta.env.VITE_API_BASE_URL || ''}/api/v1`;
 
 // ── Request Types ──────────────────────────────────────
@@ -22,6 +24,7 @@ export interface GenerationRequest {
   custom_instructions?: string;
   tone?: 'professional' | 'casual' | 'technical' | 'conversational';
   include_faq?: boolean;
+  target_word_count?: number;
 }
 
 // ── Response Types ─────────────────────────────────────
@@ -97,8 +100,21 @@ export interface ContentQuality {
   engagement_potential: number;
 }
 
+export interface GEOMetrics {
+  geo_score: number;
+  direct_answer_score: number;
+  citation_structure_score: number;
+  eeat_score: number;
+  entity_clarity_score: number;
+  query_match_score: number;
+  authority_score: number;
+  geo_strengths: string[];
+  geo_improvements: string[];
+}
+
 export interface ValidationReport {
   seo_metrics: SEOMetrics;
+  geo_metrics: GEOMetrics;
   snippet_analysis: SnippetAnalysis;
   naturalness_analysis: NaturalnessAnalysis;
   content_quality: ContentQuality;
@@ -120,6 +136,7 @@ export interface FinalOutput {
     projected_monthly_traffic: number;
     ranking_probability: number;
     competition_level: string;
+    target_word_count: number;
   };
   generation_timestamp: string;
   version: string;
@@ -231,8 +248,13 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
 }
 
 export async function generateBlog(req: GenerationRequest): Promise<FinalOutput> {
+  const token = getToken();
   return request<FinalOutput>(`${API_BASE}/generate`, {
     method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify(req),
   });
 }
@@ -246,4 +268,65 @@ export async function analyzeKeywords(input: KeywordInput): Promise<StrategyBrie
 
 export async function healthCheck(): Promise<HealthResponse> {
   return request<HealthResponse>(`${API_BASE}/health`);
+}
+
+// ── DB History (authenticated) ─────────────────────────────────────────────
+
+export async function getDbHistory(): Promise<HistoryItem[]> {
+  const token = getToken();
+  if (!token) return [];
+  try {
+    const items = await request<any[]>(`${API_BASE}/history`, {
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    });
+    return items.map((doc) => ({
+      id: doc.id,
+      title: doc.title,
+      keyword: doc.keyword,
+      seoScore: doc.seo_score,
+      naturalness: doc.naturalness,
+      date: new Date(doc.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+      wordCount: doc.word_count,
+      timestamp: doc.timestamp,
+      blogContent: doc.blog_content ?? '',
+      metadata: doc.metadata,
+      strategyBrief: doc.strategy_brief,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export async function deleteDbHistoryItem(id: string): Promise<void> {
+  const token = getToken();
+  if (!token) return;
+  await request(`${API_BASE}/history/${id}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+  });
+}
+
+export async function getDbHistoryItem(id: string): Promise<HistoryItem | null> {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const doc = await request<any>(`${API_BASE}/history/${id}`, {
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    });
+    return {
+      id: doc.id,
+      title: doc.title,
+      keyword: doc.keyword,
+      seoScore: doc.seo_score,
+      naturalness: doc.naturalness,
+      date: new Date(doc.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+      wordCount: doc.word_count,
+      timestamp: doc.timestamp,
+      blogContent: doc.blog_content ?? '',
+      metadata: doc.metadata,
+      strategyBrief: doc.strategy_brief,
+    };
+  } catch {
+    return null;
+  }
 }

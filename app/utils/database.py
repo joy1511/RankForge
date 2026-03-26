@@ -29,6 +29,7 @@ async def connect_db():
         
         # Create indexes
         await _db.users.create_index("email", unique=True)
+        await _db.generations.create_index([("user_id", 1), ("timestamp", -1)])
         logger.info("Database indexes created")
         
     except Exception as e:

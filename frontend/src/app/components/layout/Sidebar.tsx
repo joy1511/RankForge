@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router";
-import { Home, PenTool, Search, History, BookOpen, User } from "lucide-react";
+import { Home, PenTool, Search, History, User } from "lucide-react";
 
 const navItems = [
   { path: "/app", icon: Home, label: "Dashboard" },
@@ -48,14 +48,7 @@ export function Sidebar() {
         {/* Bottom Links */}
         <div className="p-4 border-t border-[--border-subtle] space-y-1">
           <Link
-            to="/docs"
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-[--text-secondary] hover:text-[--text-primary] hover:bg-[--bg-tertiary]/50 transition-all text-sm"
-          >
-            <BookOpen className="w-[18px] h-[18px]" />
-            <span>Docs</span>
-          </Link>
-          <Link
-            to="/profile"
+            to="/app"
             className="flex items-center gap-3 px-3 py-2 rounded-lg text-[--text-secondary] hover:text-[--text-primary] hover:bg-[--bg-tertiary]/50 transition-all text-sm"
           >
             <User className="w-[18px] h-[18px]" />
