@@ -4,61 +4,45 @@ import re
 from typing import Dict, List, Tuple
 from collections import Counter
 from app.schemas.validation import (
-    SEOMetrics, SnippetAnalysis, NaturalnessAnalysis, 
+    SEOMetrics, SnippetAnalysis, NaturalnessAnalysis,
     ContentQuality, ValidationReport
 )
 from app.schemas.keyword import KeywordCluster
+from app.engines.geo_validator import GEOValidator
 from app.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
 
 class SEOValidator:
-    """Validates and scores content for SEO optimization"""
-    
+    """Validates and scores content for SEO and GEO optimization"""
+
     def __init__(self):
         self.logger = logger
-    
+        self.geo_validator = GEOValidator()
+
     async def validate_content(
-        self, 
-        content: str, 
+        self,
+        content: str,
         keyword_cluster: KeywordCluster,
         target_word_count: int
     ) -> ValidationReport:
-        """
-        Perform comprehensive SEO validation
-        
-        Args:
-            content: Markdown blog content
-            keyword_cluster: Target keywords
-            target_word_count: Expected word count
-            
-        Returns:
-            Complete validation report
-        """
-        self.logger.info("Starting SEO validation")
-        
-        # Extract text without markdown
+        self.logger.info("Starting SEO + GEO validation")
+
         clean_text = self._clean_markdown(content)
-        
-        # Calculate all metrics
-        seo_metrics = await self._calculate_seo_metrics(content, clean_text, keyword_cluster)
+
+        seo_metrics    = await self._calculate_seo_metrics(content, clean_text, keyword_cluster)
+        geo_metrics    = await self.geo_validator.calculate_geo_score(content, clean_text, keyword_cluster)
         snippet_analysis = await self._analyze_snippet_readiness(content, keyword_cluster)
-        naturalness = await self._analyze_naturalness(clean_text)
-        quality = await self._analyze_content_quality(clean_text, target_word_count)
-        
-        # Calculate overall score
-        overall_score = self._calculate_overall_score(
-            seo_metrics, snippet_analysis, naturalness, quality
-        )
-        
-        # Generate insights
-        strengths, improvements = self._generate_insights(
-            seo_metrics, snippet_analysis, naturalness, quality
-        )
-        
+        naturalness    = await self._analyze_naturalness(clean_text)
+        quality        = await self._analyze_content_quality(clean_text, target_word_count)
+
+        overall_score = self._calculate_overall_score(seo_metrics, geo_metrics, snippet_analysis, naturalness, quality)
+        strengths, improvements = self._generate_insights(seo_metrics, geo_metrics, snippet_analysis, naturalness, quality)
+
         report = ValidationReport(
             seo_metrics=seo_metrics,
+            geo_metrics=geo_metrics,
             snippet_analysis=snippet_analysis,
             naturalness_analysis=naturalness,
             content_quality=quality,
@@ -67,8 +51,8 @@ class SEOValidator:
             improvements_needed=improvements,
             editor_notes=self._generate_editor_notes(overall_score)
         )
-        
-        self.logger.info(f"Validation complete. Overall score: {overall_score:.2f}")
+
+        self.logger.info(f"Validation complete. Overall={overall_score:.2f} SEO={seo_metrics.seo_optimization_percentage:.1f} GEO={geo_metrics.geo_score:.1f}")
         return report
     
     def _clean_markdown(self, content: str) -> str:
@@ -435,25 +419,26 @@ class SEOValidator:
     def _calculate_overall_score(
         self,
         seo: SEOMetrics,
+        geo,
         snippet: SnippetAnalysis,
         naturalness: NaturalnessAnalysis,
         quality: ContentQuality
     ) -> float:
-        """Calculate weighted overall score"""
-        
-        overall = (
-            seo.seo_optimization_percentage * 0.30 +
-            snippet.snippet_readiness_probability * 0.20 +
-            naturalness.naturalness_score * 0.25 +
-            quality.depth_score * 0.15 +
-            quality.actionability_score * 0.10
+        """Weighted overall score — SEO + GEO + content quality signals"""
+        return round(
+            seo.seo_optimization_percentage * 0.25 +
+            geo.geo_score                   * 0.25 +
+            snippet.snippet_readiness_probability * 0.15 +
+            naturalness.naturalness_score   * 0.20 +
+            quality.depth_score             * 0.10 +
+            quality.actionability_score     * 0.05,
+            2
         )
-        
-        return round(overall, 2)
-    
+
     def _generate_insights(
         self,
         seo: SEOMetrics,
+        geo,
         snippet: SnippetAnalysis,
         naturalness: NaturalnessAnalysis,
         quality: ContentQuality
@@ -462,39 +447,43 @@ class SEOValidator:
         
         strengths = []
         improvements = []
-        
-        # SEO analysis
+
+        # SEO
         if seo.seo_optimization_percentage >= 80:
             strengths.append("Excellent SEO optimization")
         elif seo.seo_optimization_percentage < 60:
             improvements.append("Improve keyword placement and density")
-        
+
         if seo.keyword_density_compliance:
             strengths.append("Optimal keyword density")
         else:
             improvements.append("Adjust keyword density to 1-3% range")
-        
+
+        # GEO
+        strengths.extend(geo.geo_strengths)
+        improvements.extend(geo.geo_improvements)
+
         # Snippet readiness
         if snippet.snippet_readiness_probability >= 70:
             strengths.append("High featured snippet potential")
         else:
             improvements.append("Add more Q&A sections and structured lists")
-        
+
         # Naturalness
         if naturalness.naturalness_score >= 75:
             strengths.append("Natural, human-like writing style")
         elif naturalness.naturalness_score < 60:
             improvements.append("Increase sentence variety and vocabulary richness")
-        
+
         # Quality
         if quality.actionability_score >= 70:
             strengths.append("Highly actionable content")
         else:
             improvements.append("Add more practical steps and implementation guidance")
-        
+
         if quality.engagement_potential >= 70:
             strengths.append("Strong engagement potential")
-        
+
         return strengths, improvements
     
     def _generate_editor_notes(self, overall_score: float) -> str:

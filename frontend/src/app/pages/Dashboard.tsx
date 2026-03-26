@@ -2,16 +2,19 @@ import { Link } from "react-router";
 import { useEffect, useState } from "react";
 import {
   Zap, BarChart3, Target, Clock, TrendingUp,
-  Eye, Download, PenTool, Search, BookOpen, ArrowRight,
+  Eye, Download, PenTool, Search, History, X, ArrowRight,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { ScoreBadge } from "../components/ScoreBadge";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { getHistory, healthCheck, type HistoryItem, type HealthResponse } from "../services/api";
 
 export function Dashboard() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [apiStatus, setApiStatus] = useState<HealthResponse | null>(null);
   const [apiError, setApiError] = useState(false);
+  const [viewItem, setViewItem] = useState<HistoryItem | null>(null);
 
   useEffect(() => {
     setHistory(getHistory());
@@ -40,7 +43,7 @@ export function Dashboard() {
   const quickActions = [
     { icon: PenTool, title: "Generate Blog", description: "Create SEO-optimized content in minutes", iconBg: "bg-accent-tint", iconColor: "text-accent", link: "/app/generate" },
     { icon: Search, title: "Analyze Keywords", description: "Research keywords and SERP gaps", iconBg: "bg-teal-tint", iconColor: "text-teal", link: "/app/keywords" },
-    { icon: BookOpen, title: "View API Docs", description: "Integration guides and examples", iconBg: "bg-[--bg-tertiary]", iconColor: "text-[--text-primary]", link: "#" },
+    { icon: History, title: "View History", description: "Browse all your generated content", iconBg: "bg-[--bg-tertiary]", iconColor: "text-[--text-primary]", link: "/app/history" },
   ];
 
   const topItem = history[0];
@@ -125,7 +128,7 @@ export function Dashboard() {
                       <td className="py-3.5 px-3 text-sm text-[--text-secondary] hidden lg:table-cell">{gen.date}</td>
                       <td className="py-3.5 px-3">
                         <div className="flex items-center gap-1">
-                          <button className="p-2 rounded-lg hover:bg-[--bg-tertiary] transition-colors" title="View"><Eye className="w-4 h-4 text-[--text-secondary]" /></button>
+                          <button className="p-2 rounded-lg hover:bg-[--bg-tertiary] transition-colors" title="View" onClick={() => setViewItem(gen)}><Eye className="w-4 h-4 text-[--text-secondary]" /></button>
                           <button className="p-2 rounded-lg hover:bg-[--bg-tertiary] transition-colors" title="Download"
                             onClick={() => {
                               const blob = new Blob([gen.blogContent], { type: "text/markdown" });
@@ -205,6 +208,28 @@ export function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* Blog Viewer Modal */}
+      {viewItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setViewItem(null)}>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div
+            className="relative w-full max-w-4xl max-h-[85vh] overflow-y-auto rounded-2xl border border-[--border-subtle] shadow-2xl bg-white p-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setViewItem(null)}
+              className="absolute top-4 right-4 p-2 rounded-lg hover:bg-[--bg-tertiary] transition-colors"
+            >
+              <X className="w-4 h-4 text-[--text-secondary]" />
+            </button>
+            <p className="text-xs text-[--text-tertiary] mb-4">{viewItem.wordCount.toLocaleString()} words · SEO Score: {viewItem.seoScore}</p>
+            <div className="prose max-w-none prose-headings:text-[--text-primary] prose-p:text-[--text-secondary]">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{viewItem.blogContent}</ReactMarkdown>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

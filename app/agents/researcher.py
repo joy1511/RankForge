@@ -176,8 +176,8 @@ Return ONLY the JSON structure, no additional text."""
             # Create ContentOutline
             outline = ContentOutline(
                 title=data.get('title', f"Complete Guide to {strategy_brief.keyword_cluster.primary}"),
-                meta_description=data.get('meta_description', '')[:160],
-                introduction_brief=data.get('introduction_brief', ''),
+                meta_description=(data.get('meta_description', '') or '')[:160] or f"Discover everything about {strategy_brief.keyword_cluster.primary}. Expert insights, practical tips, and actionable strategies for {strategy_brief.target_location}.",
+                introduction_brief=data.get('introduction_brief', '') or f"Introduce {strategy_brief.keyword_cluster.primary}, its importance, and what readers will learn",
                 sections=sections,
                 conclusion_brief=data.get('conclusion_brief', ''),
                 target_word_count=data.get('target_word_count', strategy_brief.structural_requirements['target_word_count']),

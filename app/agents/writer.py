@@ -25,7 +25,8 @@ class WriterAgent(BaseAgent):
         outline: ContentOutline, 
         strategy_brief: StrategyBrief,
         tone: str = "professional",
-        include_faq: bool = True
+        include_faq: bool = True,
+        custom_instructions: str = None
     ) -> BlogDraft:
         """
         Generate complete blog content from outline
@@ -49,15 +50,13 @@ class WriterAgent(BaseAgent):
             system_prompt = self._build_system_prompt()
             
             # Build user prompt
-            user_prompt = self._build_user_prompt(outline, strategy_brief, tone, include_faq)
+            user_prompt = self._build_user_prompt(outline, strategy_brief, tone, include_faq, custom_instructions)
             
             # Invoke LLM
             markdown_content = await self._invoke_llm(system_prompt, user_prompt)
             
             # Post-process and validate
             markdown_content = self._post_process_content(markdown_content)
-            
-            # Create BlogDraft
             draft = self._create_blog_draft(markdown_content, outline, strategy_brief)
             
             self.logger.info(f"Content generated: {draft.word_count} words, {draft.sections_count} sections")
@@ -123,7 +122,8 @@ Write the complete blog post in Markdown format."""
         outline: ContentOutline, 
         strategy_brief: StrategyBrief,
         tone: str,
-        include_faq: bool
+        include_faq: bool,
+        custom_instructions: str = None
     ) -> str:
         """Build user prompt with outline and requirements"""
         
@@ -182,6 +182,7 @@ REQUIREMENTS:
 8. Ensure keyword density of 1-2% for primary keyword
 9. Make content scannable with lists and short paragraphs
 10. Write {outline.target_word_count} words minimum
+{f"{chr(10)}CUSTOM INSTRUCTIONS (follow these carefully):{chr(10)}{custom_instructions}" if custom_instructions else ""}
 
 Write the complete blog post now in Markdown format. Start with # {outline.title}"""
         
@@ -200,7 +201,7 @@ Write the complete blog post now in Markdown format. Start with # {outline.title
             formatted.append(f"{indent}   Word count: ~{section.estimated_word_count}")
             
             if section.snippet_opportunity:
-                formatted.append(f"{indent}   ⭐ SNIPPET OPPORTUNITY - Answer concisely in 40-60 words")
+                formatted.append(f"{indent}   [SNIPPET] SNIPPET OPPORTUNITY - Answer concisely in 40-60 words")
             
             formatted.append("")
             

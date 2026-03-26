@@ -200,7 +200,7 @@ class KeywordEngine:
         ]
         
         competitor_weaknesses = [
-            "Lack of local {location} examples",
+            f"Lack of local {keyword_input.target_location} examples",
             "Missing actionable implementation steps",
             "No visual aids or diagrams",
             "Outdated information",

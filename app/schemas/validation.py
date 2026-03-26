@@ -16,6 +16,19 @@ class SEOMetrics(BaseModel):
     readability_score: float = Field(ge=0.0, le=100.0)
 
 
+class GEOMetrics(BaseModel):
+    """Generative Engine Optimization metrics — how likely AI systems are to cite this content"""
+    geo_score: float = Field(ge=0.0, le=100.0)
+    direct_answer_score: float = Field(ge=0.0, le=100.0)
+    citation_structure_score: float = Field(ge=0.0, le=100.0)
+    eeat_score: float = Field(ge=0.0, le=100.0)
+    entity_clarity_score: float = Field(ge=0.0, le=100.0)
+    query_match_score: float = Field(ge=0.0, le=100.0)
+    authority_score: float = Field(ge=0.0, le=100.0)
+    geo_strengths: List[str] = Field(default_factory=list)
+    geo_improvements: List[str] = Field(default_factory=list)
+
+
 class SnippetAnalysis(BaseModel):
     """Featured snippet readiness analysis"""
     snippet_readiness_probability: float = Field(ge=0.0, le=100.0)
@@ -47,6 +60,7 @@ class ContentQuality(BaseModel):
 class ValidationReport(BaseModel):
     """Complete validation report from Editor Agent"""
     seo_metrics: SEOMetrics
+    geo_metrics: GEOMetrics
     snippet_analysis: SnippetAnalysis
     naturalness_analysis: NaturalnessAnalysis
     content_quality: ContentQuality
@@ -63,17 +77,14 @@ class FinalOutput(BaseModel):
     strategy_brief: Optional[Dict] = None
     generation_timestamp: str
     version: str = Field(default="1.0.0")
-    
-    class Config:
-        json_schema_extra = {
+
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "blog_content": "# Your SEO-Optimized Blog Title\n\n...",
-                "metadata": {
-                    "seo_metrics": {
-                        "seo_optimization_percentage": 92.5
-                    }
-                },
+                "metadata": {"seo_metrics": {"seo_optimization_percentage": 92.5}},
                 "generation_timestamp": "2024-01-15T10:30:00Z",
                 "version": "1.0.0"
             }
         }
+    }

@@ -3,7 +3,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 from langchain_groq import ChatGroq
-from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage, SystemMessage
 from app.config import settings
 from app.utils.logger import setup_logger, log_agent_activity

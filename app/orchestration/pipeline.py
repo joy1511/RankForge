@@ -1,6 +1,6 @@
 """Main orchestration pipeline for RankForge"""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from app.schemas.keyword import KeywordInput, StrategyBrief
 from app.schemas.generation import GenerationRequest, ContentOutline, BlogDraft
@@ -53,7 +53,7 @@ class RankForgePipeline:
         try:
             # PHASE 1: Intent & Strategy Engine
             self.logger.info("\n[PHASE 1] Intent & Strategy Engine")
-            strategy_brief = await self._execute_phase_1(request.keyword_input)
+            strategy_brief = await self._execute_phase_1(request.keyword_input, request.target_word_count)
             
             # PHASE 2: Multi-Agent Generation Core
             self.logger.info("\n[PHASE 2] Multi-Agent Generation Core")
@@ -84,7 +84,7 @@ class RankForgePipeline:
                 details={"error": str(e), "phase": "unknown"}
             )
     
-    async def _execute_phase_1(self, keyword_input: KeywordInput) -> StrategyBrief:
+    async def _execute_phase_1(self, keyword_input: KeywordInput, target_word_count: int = None) -> StrategyBrief:
         """
         Phase 1: Keyword & SEO Logic Engine
         
@@ -101,6 +101,11 @@ class RankForgePipeline:
         
         try:
             strategy_brief = await self.keyword_engine.analyze_keywords(keyword_input)
+            
+            # Override word count if user specified one
+            if target_word_count:
+                strategy_brief.serp_gap.recommended_word_count = target_word_count
+                strategy_brief.structural_requirements['target_word_count'] = target_word_count
             
             self.logger.info(f" Keyword clustering complete")
             self.logger.info(f"  - Primary: {strategy_brief.keyword_cluster.primary}")
@@ -179,7 +184,8 @@ class RankForgePipeline:
                 outline=outline,
                 strategy_brief=strategy_brief,
                 tone=request.tone,
-                include_faq=request.include_faq
+                include_faq=request.include_faq,
+                custom_instructions=request.custom_instructions
             )
             
             self.logger.info(f" Blog content generated")
@@ -265,9 +271,10 @@ class RankForgePipeline:
                 "estimated_monthly_searches": strategy_brief.traffic_projection.estimated_monthly_searches,
                 "projected_monthly_traffic": strategy_brief.traffic_projection.projected_monthly_traffic,
                 "ranking_probability": strategy_brief.traffic_projection.ranking_probability,
-                "competition_level": strategy_brief.traffic_projection.competition_level
+                "competition_level": strategy_brief.traffic_projection.competition_level,
+                "target_word_count": strategy_brief.serp_gap.recommended_word_count,
             },
-            generation_timestamp=datetime.utcnow().isoformat() + "Z",
+            generation_timestamp=datetime.now(timezone.utc).isoformat(),
             version=settings.app_version
         )
     
