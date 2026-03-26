@@ -102,17 +102,17 @@ class RankForgePipeline:
         try:
             strategy_brief = await self.keyword_engine.analyze_keywords(keyword_input)
             
-            self.logger.info(f"✓ Keyword clustering complete")
+            self.logger.info(f" Keyword clustering complete")
             self.logger.info(f"  - Primary: {strategy_brief.keyword_cluster.primary}")
             self.logger.info(f"  - Secondary keywords: {len(strategy_brief.keyword_cluster.secondary)}")
             self.logger.info(f"  - Long-tail keywords: {len(strategy_brief.keyword_cluster.long_tail)}")
             self.logger.info(f"  - Search intent: {strategy_brief.keyword_cluster.search_intent}")
             
-            self.logger.info(f"✓ SERP gap analysis complete")
+            self.logger.info(f" SERP gap analysis complete")
             self.logger.info(f"  - Missing topics: {len(strategy_brief.serp_gap.missing_topics)}")
             self.logger.info(f"  - Content opportunities: {len(strategy_brief.serp_gap.content_opportunities)}")
             
-            self.logger.info(f"✓ Traffic projection complete")
+            self.logger.info(f" Traffic projection complete")
             self.logger.info(f"  - Est. monthly searches: {strategy_brief.traffic_projection.estimated_monthly_searches}")
             self.logger.info(f"  - Ranking probability: {strategy_brief.traffic_projection.ranking_probability}%")
             self.logger.info(f"  - Projected traffic: {strategy_brief.traffic_projection.projected_monthly_traffic}/month")
@@ -151,7 +151,7 @@ class RankForgePipeline:
                 tone=request.tone
             )
             
-            self.logger.info(f"✓ Content outline created")
+            self.logger.info(f" Content outline created")
             self.logger.info(f"  - Title: {outline.title}")
             self.logger.info(f"  - Main sections: {len(outline.sections)}")
             self.logger.info(f"  - Target word count: {outline.target_word_count}")
@@ -182,7 +182,7 @@ class RankForgePipeline:
                 include_faq=request.include_faq
             )
             
-            self.logger.info(f"✓ Blog content generated")
+            self.logger.info(f" Blog content generated")
             self.logger.info(f"  - Word count: {blog_draft.word_count}")
             self.logger.info(f"  - Sections: {blog_draft.sections_count}")
             self.logger.info(f"  - Keywords used: {len(blog_draft.keywords_used)}")
@@ -219,7 +219,7 @@ class RankForgePipeline:
                 strategy_brief=strategy_brief
             )
             
-            self.logger.info(f"✓ Content validation complete")
+            self.logger.info(f" Content validation complete")
             self.logger.info(f"\n  SCORING REPORT:")
             self.logger.info(f"  ├─ SEO Optimization: {validation_report.seo_metrics.seo_optimization_percentage}%")
             self.logger.info(f"  ├─ Snippet Readiness: {validation_report.snippet_analysis.snippet_readiness_probability}%")

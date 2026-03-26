@@ -17,6 +17,15 @@ logger = setup_logger(__name__)
 router = APIRouter(prefix="/api/v1", tags=["RankForge"])
 
 
+def _check_api_key_error(error: Exception) -> bool:
+    """Check if the error is related to an invalid API key"""
+    error_str = str(error).lower()
+    return any(keyword in error_str for keyword in [
+        "invalid api key", "invalid_api_key", "authentication",
+        "401", "unauthorized", "api key not found", "api_key_invalid"
+    ])
+
+
 @router.post(
     "/generate",
     response_model=FinalOutput,
@@ -46,21 +55,25 @@ async def generate_blog(request: GenerationRequest) -> FinalOutput:
         
     except RankForgeException as e:
         logger.error(f"RankForge error: {e.message}")
+        if _check_api_key_error(e):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail={"error": "Invalid Groq API Key", "message": "Your GROQ_API_KEY is invalid or expired. Please update it in your .env file and restart the backend server."}
+            )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "error": e.message,
-                "details": e.details
-            }
+            detail={"error": e.message, "details": e.details}
         )
     except Exception as e:
-        logger.error(f"Unexpected error: {str(e)}")
+        logger.error(f"Unexpected error in generate: {str(e)}")
+        if _check_api_key_error(e):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail={"error": "Invalid Groq API Key", "message": "Your GROQ_API_KEY is invalid or expired. Please update it in your .env file and restart the backend server."}
+            )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "error": "Internal server error",
-                "message": str(e)
-            }
+            detail={"error": "Internal server error", "message": str(e)}
         )
 
 
@@ -92,22 +105,26 @@ async def analyze_keywords(keyword_input: KeywordInput) -> StrategyBrief:
         return result
         
     except RankForgeException as e:
-        logger.error(f"RankForge error: {e.message}")
+        logger.error(f"RankForge error in keywords: {e.message}")
+        if _check_api_key_error(e):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail={"error": "Invalid Groq API Key", "message": "Your GROQ_API_KEY is invalid or expired. Please update it in your .env file and restart the backend server."}
+            )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "error": e.message,
-                "details": e.details
-            }
+            detail={"error": e.message, "details": e.details}
         )
     except Exception as e:
-        logger.error(f"Unexpected error: {str(e)}")
+        logger.error(f"Unexpected error in keywords: {str(e)}")
+        if _check_api_key_error(e):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail={"error": "Invalid Groq API Key", "message": "Your GROQ_API_KEY is invalid or expired. Please update it in your .env file and restart the backend server."}
+            )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "error": "Internal server error",
-                "message": str(e)
-            }
+            detail={"error": "Internal server error", "message": str(e)}
         )
 
 

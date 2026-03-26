@@ -7,7 +7,9 @@ from contextlib import asynccontextmanager
 import time
 from app.config import settings
 from app.api.routes import router
+from app.api.auth import auth_router
 from app.utils.logger import setup_logger
+from app.utils.database import connect_db, close_db
 
 logger = setup_logger(__name__)
 
@@ -20,7 +22,9 @@ async def lifespan(app: FastAPI):
     logger.info(f"Environment: {settings.environment}")
     logger.info(f"Log Level: {settings.log_level}")
     logger.info("=" * 80)
+    await connect_db()
     yield
+    await close_db()
     logger.info(f"Shutting down {settings.app_name}")
 
 
@@ -98,6 +102,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 # Include API routes
 app.include_router(router)
+app.include_router(auth_router)
 
 
 # Root endpoint

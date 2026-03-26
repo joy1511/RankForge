@@ -2,9 +2,9 @@
 
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
-from langchain_openai import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate
-from langchain.schema import HumanMessage, SystemMessage
+from langchain_groq import ChatGroq
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.messages import HumanMessage, SystemMessage
 from app.config import settings
 from app.utils.logger import setup_logger, log_agent_activity
 from app.utils.exceptions import AgentExecutionError
@@ -20,7 +20,7 @@ class BaseAgent(ABC):
         Initialize base agent
         
         Args:
-            model_name: OpenAI model name
+            model_name: Groq model name
             temperature: Model temperature
         """
         self.model_name = model_name or settings.researcher_model
@@ -28,13 +28,13 @@ class BaseAgent(ABC):
         self.logger = logger
         self.llm = self._initialize_llm()
     
-    def _initialize_llm(self) -> ChatOpenAI:
+    def _initialize_llm(self) -> ChatGroq:
         """Initialize the language model"""
-        return ChatOpenAI(
+        return ChatGroq(
             model=self.model_name,
             temperature=self.temperature,
             max_tokens=settings.max_tokens,
-            api_key=settings.openai_api_key,
+            groq_api_key=settings.groq_api_key,
             request_timeout=settings.request_timeout
         )
     

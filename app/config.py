@@ -2,6 +2,7 @@
 
 from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field
 
 
 class Settings(BaseSettings):
@@ -15,13 +16,18 @@ class Settings(BaseSettings):
     )
     
     # API Keys
-    openai_api_key: str
+    groq_api_key: str
     anthropic_api_key: Optional[str] = None
+    
+    # MongoDB
+    mongodb_uri: str = Field(default="")
+    
+    # JWT
+    jwt_secret: str = Field(default="rankforge-jwt-secret-change-me")
     
     # Application
     app_name: str = "RankForge"
     app_version: str = "1.0.0"
-    log_level: str = "INFO"
     environment: str = "production"
     
     # Performance
@@ -29,16 +35,21 @@ class Settings(BaseSettings):
     enable_caching: bool = True
     cache_ttl: int = 3600
     request_timeout: int = 300
+    max_retries: int = 3
     
-    # AI Models
-    researcher_model: str = "gpt-4-turbo-preview"
-    writer_model: str = "gpt-4-turbo-preview"
-    editor_model: str = "gpt-4-turbo-preview"
+    # Logging
+    log_level: str = "INFO"
+    enable_metrics: bool = True
+    
+    # AI Models (Groq-compatible)
+    researcher_model: str = "llama-3.3-70b-versatile"
+    writer_model: str = "llama-3.3-70b-versatile"
+    editor_model: str = "llama-3.3-70b-versatile"
     temperature: float = 0.7
     max_tokens: int = 4000
     
     # Rate Limiting
-    rate_limit_per_minute: int = 10
+    rate_limit_rpm: int = 60
     rate_limit_per_hour: int = 100
 
 

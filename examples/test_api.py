@@ -33,7 +33,7 @@ async def test_keyword_analysis():
         
         if response.status_code == 200:
             result = response.json()
-            print("\n✓ Keyword Analysis Successful")
+            print("\n Keyword Analysis Successful")
             print(f"\nPrimary Keyword: {result['keyword_cluster']['primary']}")
             print(f"Search Intent: {result['keyword_cluster']['search_intent']}")
             print(f"Difficulty Score: {result['keyword_cluster']['difficulty_score']}")
@@ -50,7 +50,7 @@ async def test_keyword_analysis():
             for topic in result['serp_gap']['missing_topics'][:3]:
                 print(f"  - {topic}")
         else:
-            print(f"✗ Error: {response.status_code}")
+            print(f" Error: {response.status_code}")
             print(response.text)
 
 
@@ -90,7 +90,7 @@ async def test_full_generation():
         if response.status_code == 200:
             result = response.json()
             
-            print(f"\n✓ Blog Generation Successful (took {duration:.1f}s)")
+            print(f"\n Blog Generation Successful (took {duration:.1f}s)")
             
             # Display metadata
             metadata = result['metadata']
@@ -123,15 +123,15 @@ async def test_full_generation():
             # Save blog content
             with open("generated_blog.md", "w", encoding="utf-8") as f:
                 f.write(result['blog_content'])
-            print(f"\n✓ Blog content saved to: generated_blog.md")
+            print(f"\n Blog content saved to: generated_blog.md")
             
             # Save full report
             with open("generation_report.json", "w", encoding="utf-8") as f:
                 json.dump(result, f, indent=2)
-            print(f"✓ Full report saved to: generation_report.json")
+            print(f" Full report saved to: generation_report.json")
             
         else:
-            print(f"✗ Error: {response.status_code}")
+            print(f" Error: {response.status_code}")
             print(response.text)
 
 
@@ -157,7 +157,7 @@ async def main():
         print("="*80)
         
     except Exception as e:
-        print(f"\n✗ Test failed with error: {str(e)}")
+        print(f"\n Test failed with error: {str(e)}")
 
 
 if __name__ == "__main__":
