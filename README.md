@@ -94,4 +94,4 @@ The system operates in three distinct phases:
 
 ## License
 
-Copyright 2026. All rights reserved.
+This project is licensed under the [MIT License](LICENSE).
