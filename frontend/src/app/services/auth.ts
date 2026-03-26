@@ -3,7 +3,7 @@
  * Handles signup, login, token management, and user state
  */
 
-const API_BASE = '/api/v1/auth';
+const API_BASE = `${import.meta.env.VITE_API_BASE_URL || ''}/api/v1/auth`;
 const TOKEN_KEY = 'rankforge_token';
 const USER_KEY = 'rankforge_user';
 
