@@ -20,7 +20,10 @@ export function Sidebar() {
       >
         {/* Logo */}
         <div className="p-6 border-b border-[--border-subtle]">
-          <Link to="/" className="text-xl font-bold tracking-tight text-[--text-primary] hover:opacity-80 transition-opacity">RankForge</Link>
+          <Link to="/" className="flex items-center gap-2 text-xl font-bold tracking-tight text-[--text-primary] hover:opacity-80 transition-opacity">
+            <img src="/logo.svg" alt="RankForge" className="w-14 h-14" />
+            RankForge
+          </Link>
         </div>
 
         {/* Navigation */}
